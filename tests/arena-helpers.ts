@@ -240,30 +240,29 @@ export async function  reserveClass(
     console.log(`   Respuesta raw:`, responseText);
 
     reservaData = JSON.parse(responseText);
+    // Si el servidor devuelve una cadena JSON dentro de otra, parseamos doble.
+    if (typeof reservaData === 'string') {
+      try {
+        reservaData = JSON.parse(reservaData);
+      } catch {
+        // deja reservaData como string si no se pudo parsear
+      }
+    }
     console.log(`   Respuesta parseada:`, JSON.stringify(reservaData, null, 2));
   } catch (error) {
     console.log(`   ❌ Error parseando respuesta:`, error);
     return false;
   }
 
-  const apiMessage = reservaData.apiMessage ?? {};
-  const code = Number(apiMessage.Code);
-  const status = (reservaData.status || '').toString().toUpperCase();
-  const message = apiMessage.Message || reservaData.message || '';
-  const normalizedMessage = message.toLowerCase();
+  const rawString = JSON.stringify(reservaData).toLowerCase();
 
-  const isSuccessCode = code === 60 || apiMessage.Code === "60";
-  const isSuccessMessage = normalizedMessage.includes("reservation correctly made");
-
-  if (status === "OK" && (isSuccessCode || isSuccessMessage)) {
+  if (rawString.includes('reservation correctly made')) {
     console.log(`   ✅ ${className} reservada exitosamente`);
     console.log(`      Mensaje: ${reservaData.message}`);
     return true;
   }
 
-  const isWaitlistMessage = normalizedMessage.includes("waiting list");
-
-  if (status === "OK" && (isSuccessCode || isWaitlistMessage)) {
+  if (rawString.includes('waiting list')) {
     console.log(`   ⏳ ${className} - Apuntado a lista de espera (reservas agotadas)`);
     console.log(`      Mensaje: ${reservaData.message}`);
     return false;
@@ -273,5 +272,5 @@ export async function  reserveClass(
   console.log(`      Status: ${reservaData.status}`);
   console.log(`      Code: ${reservaData.apiMessage?.Code}`);
   console.log(`      Message: ${reservaData.message || reservaData.apiMessage?.Message}`);
-  return false;
+  throw new Error(`Reserva rechazada: ${reservaData.apiMessage?.Message ?? reservaData.message ?? 'desconocido'}`);
 }
