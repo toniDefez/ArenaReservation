@@ -53,6 +53,14 @@ import {
   reserveClass,
 } from './arena-helpers.js';
 
+const activitiesFilter = (process.env.RUN_ACTIVITIES ?? '')
+  .split(',')
+  .map((s) => s.trim().toLowerCase())
+  .filter(Boolean);
+
+const shouldRun = (activity: string) =>
+  activitiesFilter.length === 0 || activitiesFilter.includes(activity.toLowerCase());
+
 // ============================================
 // TESTS DE RESERVA POR ACTIVIDAD
 // ============================================
@@ -67,6 +75,7 @@ import {
  *   - 72+ horas de anticipación
  */
 test('🥊 Reservar BOXEO (Lunes y Viernes 19:00+)', async ({ page }) => {
+  test.skip(!shouldRun('boxeo'), 'BOXEO deshabilitado por RUN_ACTIVITIES');
   await login(page);
   await navigateToSchedule(page, [DayOfWeek.Monday, DayOfWeek.Friday]);
 
@@ -102,6 +111,7 @@ test('🥊 Reservar BOXEO (Lunes y Viernes 19:00+)', async ({ page }) => {
  *   5. Verificación de éxito
  */
 test('💪 Reservar CROSSFIT (Miércoles 17:30+)', async ({ page }) => {
+  test.skip(!shouldRun('crossfit'), 'CROSSFIT deshabilitado por RUN_ACTIVITIES');
   await login(page);
   await navigateToSchedule(page, [DayOfWeek.Wednesday]);
 
@@ -131,6 +141,7 @@ test('💪 Reservar CROSSFIT (Miércoles 17:30+)', async ({ page }) => {
  *   - Hora: A partir de 17:30 (minHour = 17)
  */
 test('🤸 Reservar CALISTENIA (Martes, Jueves y Viernes 17:30+)', async ({ page }) => {
+  test.skip(!shouldRun('calistenia'), 'CALISTENIA deshabilitada por RUN_ACTIVITIES');
   await login(page);
   await navigateToSchedule(page, [DayOfWeek.Tuesday, DayOfWeek.Thursday, DayOfWeek.Friday]);
 
