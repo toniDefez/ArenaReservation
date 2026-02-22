@@ -3,8 +3,8 @@ name: Arena Reservations - Calistenia
 on:
   workflow_dispatch:
   schedule:
-    # Martes, jueves y viernes a las 19:00 UTC
-    - cron: '0 19 * * 2,4,5'
+    # Martes, jueves y viernes a las 18:00 UTC --> 19:00 hora local
+    - cron: '0 18 * * 2,4,5'
 
 concurrency:
   group: reservations-calistenia-${{ github.ref }}

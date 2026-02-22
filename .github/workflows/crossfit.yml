@@ -3,8 +3,8 @@ name: Arena Reservations - Crossfit
 on:
   workflow_dispatch:
   schedule:
-    # Martes y miércoles a las 19:00 UTC
-    - cron: '0 19 * * 2,3'
+    # Martes y miércoles a las 18:00 UTC --> 19:00 hora local
+    - cron: '0 18 * * 2,3'
 
 concurrency:
   group: reservations-crossfit-${{ github.ref }}
