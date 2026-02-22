@@ -205,7 +205,7 @@ export async function findClass(
   return null;
 }
 
-export async function reserveClass(
+export async function  reserveClass(
   page: Page,
   classId: number,
   className: string
@@ -255,8 +255,7 @@ export async function reserveClass(
   const isSuccessCode = code === 60 || apiMessage.Code === "60";
   const isSuccessMessage = normalizedMessage.includes("reservation correctly made");
 
-  if ((status === "OK" || isSuccessCode || isSuccessMessage) &&
-      (isSuccessCode || isSuccessMessage)) {
+  if (status === "OK" && (isSuccessCode || isSuccessMessage)) {
     console.log(`   ✅ ${className} reservada exitosamente`);
     console.log(`      Mensaje: ${reservaData.message}`);
     return true;
@@ -264,8 +263,7 @@ export async function reserveClass(
 
   const isWaitlistMessage = normalizedMessage.includes("waiting list");
 
-  if ((status === "OK" || isSuccessCode || isWaitlistMessage) &&
-      (isSuccessCode || isWaitlistMessage)) {
+  if (status === "OK" && (isSuccessCode || isWaitlistMessage)) {
     console.log(`   ⏳ ${className} - Apuntado a lista de espera (reservas agotadas)`);
     console.log(`      Mensaje: ${reservaData.message}`);
     return false;
