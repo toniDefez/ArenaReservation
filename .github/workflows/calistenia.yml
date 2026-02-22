@@ -17,7 +17,6 @@ jobs:
       CI: false
       ARENA_USER: ${{ secrets.ARENA_USER }}
       ARENA_PASSWORD: ${{ secrets.ARENA_PASSWORD }}
-      RUN_ACTIVITIES: calistenia
       ACTIVITY_CONFIG: |
         {
           "calistenia": {
@@ -25,7 +24,8 @@ jobs:
             "allowedDays": [2, 4, 5],
             "minHour": 17,
             "minMinutes": 30,
-            "requireOpenWindow": true
+            "requireOpenWindow": true,
+            "enabled": false
           }
         }
 

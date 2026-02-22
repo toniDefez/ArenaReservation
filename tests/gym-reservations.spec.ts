@@ -53,17 +53,13 @@ import {
   reserveClass,
 } from './arena-helpers.js';
 
-const activitiesFilter = (process.env.RUN_ACTIVITIES ?? '')
-  .split(',')
-  .map((s) => s.trim().toLowerCase())
-  .filter(Boolean);
-
 type ActivityConfig = {
   activityId: number;
   allowedDays: DayOfWeek[];
   minHour: number;
   minMinutes?: number;
   requireOpenWindow?: boolean;
+  enabled?: boolean;
 };
 
 
@@ -91,42 +87,45 @@ function getActivityConfig(name: string): ActivityConfig | undefined {
   return activityConfigs[key];
 }
 
-const activitiesToRun =
-  activitiesFilter.length > 0
-    ? activitiesFilter
-    : Object.keys(activityConfigs);
+const activitiesEnabled = Object.entries(activityConfigs)
+  .filter(([, cfg]) => cfg?.enabled !== false)
+  .map(([name]) => name);
 
-if (activitiesToRun.length === 0) {
-  test.skip(true, 'No hay actividades configuradas para ejecutar (RUN_ACTIVITIES o ACTIVITY_CONFIG vacío)');
+if (activitiesEnabled.length === 0) {
+  throw new Error('No hay actividades habilitadas en ACTIVITY_CONFIG');
 }
 
-test('Reservar actividades configuradas', async ({ page }) => {
-  for (const activity of activitiesToRun) {
-    await test.step(`Reservar ${activity}`, async () => {
-      const cfg = getActivityConfig(activity);
-      if (!cfg) {
-        console.log(`⚠️  Sin configuración para ${activity}, se omite`);
-        return;
-      }
 
-      await login(page);
-      await navigateToSchedule(page, cfg.allowedDays);
+const [activityToRun] = activitiesEnabled;
 
-      const classData = await findClass(page, {
-        activityId: cfg.activityId,
-        allowedDays: cfg.allowedDays,
-        minHour: cfg.minHour,
-        minMinutes: cfg.minMinutes ?? 0,
-        label: activity.toUpperCase(),
-        requireOpenWindow: cfg.requireOpenWindow ?? true,
-      });
+if (!activityToRun) {
+  throw new Error('No se pudo determinar la actividad a ejecutar');
+}
 
-      if (classData) {
-        const success = await reserveClass(page, classData.Id, activity.toUpperCase());
-        expect(success).toBe(true);
-      } else {
-        console.log(`⚠️  No se encontró clase válida para ${activity}`);
-      }
+test('Reservar actividad configurada', async ({ page }) => {
+  await test.step(`Reservar ${activityToRun}`, async () => {
+    const cfg = getActivityConfig(activityToRun);
+    if (!cfg) {
+      throw new Error(`Sin configuración para ${activityToRun}`);
+    }
+
+    await login(page);
+    await navigateToSchedule(page, cfg.allowedDays);
+
+    const classData = await findClass(page, {
+      activityId: cfg.activityId,
+      allowedDays: cfg.allowedDays,
+      minHour: cfg.minHour,
+      minMinutes: cfg.minMinutes ?? 0,
+      label: activityToRun.toUpperCase(),
+      requireOpenWindow: cfg.requireOpenWindow ?? true,
     });
-  }
+
+    if (classData) {
+      const success = await reserveClass(page, classData.Id, activityToRun.toUpperCase());
+      expect(success).toBe(true);
+    } else {
+      console.log(`⚠️  No se encontró clase válida para ${activityToRun}`);
+    }
+  });
 });

@@ -1,10 +1,10 @@
-name: Arena Reservations - Crossfit
+name: Arena Reservations - Crossfit (clase martes y jueves a las 18:30)
 
 on:
   workflow_dispatch:
   schedule:
-    # Martes y miércoles a las 18:00 UTC --> 19:00 hora local
-    - cron: '0 18 * * 2,3'
+    # Sabado y Lunes a las 18:00 UTC --> 19:00 hora local
+    - cron: '0 18 * * 1,6'
 
 concurrency:
   group: reservations-crossfit-${{ github.ref }}
@@ -17,15 +17,15 @@ jobs:
       CI: false
       ARENA_USER: ${{ secrets.ARENA_USER }}
       ARENA_PASSWORD: ${{ secrets.ARENA_PASSWORD }}
-      RUN_ACTIVITIES: crossfit
       ACTIVITY_CONFIG: |
         {
           "crossfit": {
             "activityId": 1,
-            "allowedDays": [2, 3],
+            "allowedDays": [2, 4],
             "minHour": 17,
             "minMinutes": 30,
-            "requireOpenWindow": true
+            "requireOpenWindow": true,
+            "enabled": true
           }
         }
 

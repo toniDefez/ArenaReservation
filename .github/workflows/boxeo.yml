@@ -1,4 +1,4 @@
-name: Arena Reservations - Boxeo
+name: Arena Reservations - Boxeo (clase lunes y viernes a las 19:00)
 
 on:
   workflow_dispatch:
@@ -17,7 +17,6 @@ jobs:
       CI: false
       ARENA_USER: ${{ secrets.ARENA_USER }}
       ARENA_PASSWORD: ${{ secrets.ARENA_PASSWORD }}
-      RUN_ACTIVITIES: boxeo
       ACTIVITY_CONFIG: |
         {
           "boxeo": {
@@ -25,7 +24,8 @@ jobs:
             "allowedDays": [1, 5],
             "minHour": 19,
             "minMinutes": 0,
-            "requireOpenWindow": true
+            "requireOpenWindow": true,
+            "enabled": true
           }
         }
 
