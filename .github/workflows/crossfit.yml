@@ -1,0 +1,39 @@
+name: Arena Reservations - Crossfit
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Martes y miércoles a las 17-20 UTC
+    - cron: '0 17,18,19,20 * * 2,3'
+
+concurrency:
+  group: reservations-crossfit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run-crossfit:
+    runs-on: ubuntu-latest
+    env:
+      CI: false
+      ARENA_USER: ${{ secrets.ARENA_USER }}
+      ARENA_PASSWORD: ${{ secrets.ARENA_PASSWORD }}
+      RUN_ACTIVITIES: crossfit
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser (Chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Crossfit reservation test
+        run: npx playwright test tests/gym-reservations.spec.ts --project=chromium --reporter=list

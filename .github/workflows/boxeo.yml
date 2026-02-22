@@ -1,24 +1,23 @@
-name: Arena Reservations
+name: Arena Reservations - Boxeo
 
 on:
   workflow_dispatch:
   schedule:
-    # Todos los días a las 17:00, 18:00, 19:00 y 20:00 UTC para alinearnos con aperturas 72h antes de clases de tarde (18-21h local aprox.)
-    - cron: '0 18,19 * * *'
+    # Miércoles y viernes a las 19:00 UTC
+    - cron: '0 19 * * 3,5'
 
 concurrency:
-  group: reservations-${{ github.ref }}
+  group: reservations-boxeo-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  run-reservations:
+  run-boxeo:
     runs-on: ubuntu-latest
     env:
-      CI: false  # Para evitar que Playwright active restricciones de CI
+      CI: false
       ARENA_USER: ${{ secrets.ARENA_USER }}
       ARENA_PASSWORD: ${{ secrets.ARENA_PASSWORD }}
-      # Ajusta qué actividades se reservan: coma-separado. Vacío = todas.
-      RUN_ACTIVITIES:  ${{ vars.RUN_ACTIVITIES }}
+      RUN_ACTIVITIES: boxeo
 
     steps:
       - name: Checkout
@@ -36,5 +35,5 @@ jobs:
       - name: Install Playwright browser (Chromium)
         run: npx playwright install --with-deps chromium
 
-      - name: Run reservation tests (Chromium headless)
+      - name: Run Boxeo reservation test
         run: npx playwright test tests/gym-reservations.spec.ts --project=chromium --reporter=list
