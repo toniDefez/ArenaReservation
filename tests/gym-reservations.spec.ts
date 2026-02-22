@@ -58,106 +58,75 @@ const activitiesFilter = (process.env.RUN_ACTIVITIES ?? '')
   .map((s) => s.trim().toLowerCase())
   .filter(Boolean);
 
-const shouldRun = (activity: string) =>
-  activitiesFilter.length === 0 || activitiesFilter.includes(activity.toLowerCase());
+type ActivityConfig = {
+  activityId: number;
+  allowedDays: DayOfWeek[];
+  minHour: number;
+  minMinutes?: number;
+  requireOpenWindow?: boolean;
+};
 
-// ============================================
-// TESTS DE RESERVA POR ACTIVIDAD
-// ============================================
 
-/**
- * Test: Reservar clase de BOXEO
- * 
- * Criterios:
- *   - Actividad: BOXEO (IDActividadColectiva = 5)
- *   - Días: Lunes (1) y Viernes (5)
- *   - Hora: A partir de 19:00 (tarde)
- *   - 72+ horas de anticipación
- */
-test('🥊 Reservar BOXEO (Lunes y Viernes 19:00+)', async ({ page }) => {
-  test.skip(!shouldRun('boxeo'), 'BOXEO deshabilitado por RUN_ACTIVITIES');
-  await login(page);
-  await navigateToSchedule(page, [DayOfWeek.Monday, DayOfWeek.Friday]);
-
-  const boxeoClass = await findClass(page, {
-    activityId: 5,
-    allowedDays: [DayOfWeek.Monday, DayOfWeek.Friday],
-    minHour: 19,
-    label: 'BOXEO',
-    requireOpenWindow: true,
-  });
-
-  if (boxeoClass) {
-    const success = await reserveClass(page, boxeoClass.Id, "BOXEO");
-    expect(success).toBe(true);
-  } else {
-    console.log("⚠️  No se encontró clase de BOXEO válida");
+function parseActivityConfig(): Record<string, ActivityConfig> {
+  const raw = process.env.ACTIVITY_CONFIG;
+  if (!raw) {
+    throw new Error('Falta ACTIVITY_CONFIG en variables de entorno');
   }
-});
-
-/**
- * Test: Reservar clase de CROSSFIT
- * 
- * Criterios:
- *   - Actividad: CROSSFIT (IDActividadColectiva = 1)
- *   - Día: Miércoles (3)
- *   - Hora: A partir de 17:30 (minHour = 17)
- * 
- * Flujo:
- *   1. Login automático
- *   2. Navegación a horario semanal
- *   3. Búsqueda dinámica de clase disponible
- *   4. Reserva si encuentra disponibilidad
- *   5. Verificación de éxito
- */
-test('💪 Reservar CROSSFIT (Miércoles 17:30+)', async ({ page }) => {
-  test.skip(!shouldRun('crossfit'), 'CROSSFIT deshabilitado por RUN_ACTIVITIES');
-  await login(page);
-  await navigateToSchedule(page, [DayOfWeek.Wednesday]);
-
-  const crossfitClass = await findClass(page, {
-    activityId: 1,
-    allowedDays: [DayOfWeek.Tuesday,DayOfWeek.Wednesday],
-    minHour: 17,
-    minMinutes: 30,
-    label: 'CROSSFIT',
-    requireOpenWindow: true,
-  });
-
-  if (crossfitClass) {
-    const success = await reserveClass(page, crossfitClass.Id, "CROSSFIT");
-    expect(success).toBe(true);
-  } else {
-    console.log("⚠️  No se encontró clase de CROSSFIT disponible");
+  try {
+    const parsed = JSON.parse(raw) as Record<string, ActivityConfig>;
+    const lowered: Record<string, ActivityConfig> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      lowered[key.toLowerCase()] = value;
+    }
+    return lowered;
+  } catch (error) {
+    throw new Error(`No se pudo parsear ACTIVITY_CONFIG: ${error}`);
   }
-});
+}
 
-/**
- * Test: Reservar clase de CALISTENIA
- * 
- * Criterios:
- *   - Actividad: CALISTENIA (IDActividadColectiva = 28)
- *   - Días: Martes (2), Jueves (4) y Viernes (5)
- *   - Hora: A partir de 17:30 (minHour = 17)
- */
-test('🤸 Reservar CALISTENIA (Martes, Jueves y Viernes 17:30+)', async ({ page }) => {
-  test.skip(!shouldRun('calistenia'), 'CALISTENIA deshabilitada por RUN_ACTIVITIES');
-  await login(page);
-  await navigateToSchedule(page, [DayOfWeek.Tuesday, DayOfWeek.Thursday, DayOfWeek.Friday]);
+const activityConfigs = parseActivityConfig();
 
-  const calistheniaClass = await findClass(page, {
-    activityId: 28,
-    allowedDays: [DayOfWeek.Tuesday, DayOfWeek.Thursday, DayOfWeek.Friday],
-    minHour: 17,
-    minMinutes: 30,
-    label: 'CALISTENIA',
-    requireOpenWindow: true,
-  });
+function getActivityConfig(name: string): ActivityConfig | undefined {
+  const key = name.toLowerCase();
+  return activityConfigs[key];
+}
 
-  if (calistheniaClass) {
-    const success = await reserveClass(page, calistheniaClass.Id, "CALISTENIA");
-    expect(success).toBe(true);
-  } else {
-    console.log("⚠️  No se encontró clase de CALISTENIA disponible");
+const activitiesToRun =
+  activitiesFilter.length > 0
+    ? activitiesFilter
+    : Object.keys(activityConfigs);
+
+if (activitiesToRun.length === 0) {
+  test.skip(true, 'No hay actividades configuradas para ejecutar (RUN_ACTIVITIES o ACTIVITY_CONFIG vacío)');
+}
+
+test('Reservar actividades configuradas', async ({ page }) => {
+  for (const activity of activitiesToRun) {
+    await test.step(`Reservar ${activity}`, async () => {
+      const cfg = getActivityConfig(activity);
+      if (!cfg) {
+        console.log(`⚠️  Sin configuración para ${activity}, se omite`);
+        return;
+      }
+
+      await login(page);
+      await navigateToSchedule(page, cfg.allowedDays);
+
+      const classData = await findClass(page, {
+        activityId: cfg.activityId,
+        allowedDays: cfg.allowedDays,
+        minHour: cfg.minHour,
+        minMinutes: cfg.minMinutes ?? 0,
+        label: activity.toUpperCase(),
+        requireOpenWindow: cfg.requireOpenWindow ?? true,
+      });
+
+      if (classData) {
+        const success = await reserveClass(page, classData.Id, activity.toUpperCase());
+        expect(success).toBe(true);
+      } else {
+        console.log(`⚠️  No se encontró clase válida para ${activity}`);
+      }
+    });
   }
 });

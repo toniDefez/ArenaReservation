@@ -3,8 +3,8 @@ name: Arena Reservations - Calistenia
 on:
   workflow_dispatch:
   schedule:
-    # Martes, jueves y viernes a las 17-20 UTC
-    - cron: '0 17,18,19,20 * * 2,4,5'
+    # Martes, jueves y viernes a las 19:00 UTC
+    - cron: '0 19 * * 2,4,5'
 
 concurrency:
   group: reservations-calistenia-${{ github.ref }}
@@ -18,6 +18,16 @@ jobs:
       ARENA_USER: ${{ secrets.ARENA_USER }}
       ARENA_PASSWORD: ${{ secrets.ARENA_PASSWORD }}
       RUN_ACTIVITIES: calistenia
+      ACTIVITY_CONFIG: |
+        {
+          "calistenia": {
+            "activityId": 28,
+            "allowedDays": [2, 4, 5],
+            "minHour": 17,
+            "minMinutes": 30,
+            "requireOpenWindow": true
+          }
+        }
 
     steps:
       - name: Checkout

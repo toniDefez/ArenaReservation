@@ -18,6 +18,16 @@ jobs:
       ARENA_USER: ${{ secrets.ARENA_USER }}
       ARENA_PASSWORD: ${{ secrets.ARENA_PASSWORD }}
       RUN_ACTIVITIES: boxeo
+      ACTIVITY_CONFIG: |
+        {
+          "boxeo": {
+            "activityId": 5,
+            "allowedDays": [1, 5],
+            "minHour": 19,
+            "minMinutes": 0,
+            "requireOpenWindow": true
+          }
+        }
 
     steps:
       - name: Checkout
