@@ -14,7 +14,7 @@ jobs:
   run-reservations:
     runs-on: ubuntu-latest
     env:
-      CI: true
+      CI: false  # Para evitar que Playwright active restricciones de CI
       ARENA_USER: ${{ secrets.ARENA_USER }}
       ARENA_PASSWORD: ${{ secrets.ARENA_PASSWORD }}
       # Ajusta qué actividades se reservan: coma-separado. Vacío = todas.
