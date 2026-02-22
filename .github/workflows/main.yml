@@ -18,7 +18,7 @@ jobs:
       ARENA_USER: ${{ secrets.ARENA_USER }}
       ARENA_PASSWORD: ${{ secrets.ARENA_PASSWORD }}
       # Ajusta qué actividades se reservan: coma-separado. Vacío = todas.
-      RUN_ACTIVITIES: boxeo,crossfit,calistenia
+      RUN_ACTIVITIES:  ${{ vars.RUN_ACTIVITIES }}
 
     steps:
       - name: Checkout
