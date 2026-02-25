@@ -4,8 +4,7 @@ on:
   workflow_dispatch:
   schedule:
     # Miércoles y viernes a las 18:00 UTC --> 19:00 hora local
-    - cron: '0 18 * * 3,5'
-
+    - cron: '0 18 * * 2,5'
 concurrency:
   group: reservations-boxeo-${{ github.ref }}
   cancel-in-progress: true
