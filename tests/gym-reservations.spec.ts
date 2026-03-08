@@ -112,7 +112,7 @@ test('Reservar actividad configurada', async ({ page }) => {
     await login(page);
     await navigateToSchedule(page, cfg.allowedDays);
 
-    const classData = await findClass(page, {
+    let classData = await findClass(page, {
       activityId: cfg.activityId,
       allowedDays: cfg.allowedDays,
       minHour: cfg.minHour,
@@ -120,6 +120,20 @@ test('Reservar actividad configurada', async ({ page }) => {
       label: activityToRun.toUpperCase(),
       requireOpenWindow: cfg.requireOpenWindow ?? true,
     });
+
+    if (!classData) {
+      console.log('🔁 No hubo coincidencias en la semana actual, probando la siguiente semana...');
+
+      await navigateToSchedule(page, cfg.allowedDays, 1);
+      classData = await findClass(page, {
+        activityId: cfg.activityId,
+        allowedDays: cfg.allowedDays,
+        minHour: cfg.minHour,
+        minMinutes: cfg.minMinutes ?? 0,
+        label: activityToRun.toUpperCase(),
+        requireOpenWindow: cfg.requireOpenWindow ?? true,
+      });
+    }
 
     if (classData) {
       const success = await reserveClass(page, classData.Id, activityToRun.toUpperCase());

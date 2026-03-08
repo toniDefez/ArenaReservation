@@ -62,19 +62,25 @@ function pad(n: number): string {
   return n.toString().padStart(2, '0');
 }
 
-function nextAllowedDate(allowedDays: DayOfWeek[]): Date {
+function nextAllowedDate(allowedDays: DayOfWeek[], weekOffset = 0): Date {
   const today = new Date();
-  for (let offset = 0; offset < 14; offset++) {
+  const startOffset = weekOffset * 7;
+
+  for (let offset = startOffset; offset < startOffset + 14; offset++) {
     const candidate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
     if (allowedDays.includes(candidate.getDay())) return candidate;
   }
   return today;
 }
 
-export async function navigateToSchedule(page: Page, allowedDays: DayOfWeek[]): Promise<void> {
+export async function navigateToSchedule(
+  page: Page,
+  allowedDays: DayOfWeek[],
+  weekOffset = 0
+): Promise<void> {
   console.log("\n📅 Navegando a horario semanal...");
 
-  const scheduleDate = nextAllowedDate(allowedDays);
+  const scheduleDate = nextAllowedDate(allowedDays, weekOffset);
   const fechaIso = `${scheduleDate.getFullYear()}-${pad(scheduleDate.getMonth() + 1)}-${pad(scheduleDate.getDate())}T00:00:00`;
 
   const url = `https://arenaalicante.provis.es/ActividadesColectivas/ActividadesColectivasHorarioSemanal?fecha=${fechaIso}&integration=False&publico=False`;
