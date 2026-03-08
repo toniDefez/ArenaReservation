@@ -64,7 +64,7 @@ function pad(n: number): string {
 
 function nextAllowedDate(allowedDays: DayOfWeek[]): Date {
   const today = new Date();
-  for (let offset = 0; offset < 14; offset++) {
+  for (let offset = 1; offset < 14; offset++) {
     const candidate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
     if (allowedDays.includes(candidate.getDay())) return candidate;
   }
